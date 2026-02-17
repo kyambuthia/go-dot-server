@@ -1,17 +1,69 @@
 ## GO-DOT-SERVER
-a simple server to test godot games exported to the web locally - useful for testing/learning
 
-using this to learn how to self host a godot game (locally during development and in prod), networking in golang/web, multiplayer in godot and websockets - so this is a learning kind of project
+Simple HTTPS server for hosting and testing Godot Web exports locally.
 
-the goal here is to write a program to self-host a godot export on the web using go - first locally and eventually in prod and learn how godot handles networking.
+It serves files from `./public`, adds the headers needed for cross-origin isolated Godot builds, and includes a basic `/healthz` endpoint for deploy checks.
 
-## Project Versions
-godot - Version 4.2.1
-Go - Version 1.2.3
+## Versions
+
+- Godot: 4.2.1
+- Go: 1.23.3
+
+## Features
+
+- HTTPS static hosting for Godot web exports
+- Security headers:
+  - `Cross-Origin-Opener-Policy: same-origin`
+  - `Cross-Origin-Embedder-Policy: require-corp`
+- Asset caching rules for common game/static file extensions
+- Gzip compression for text assets (`.html`, `.js`, `.css`, `.json`, `.txt`, `.svg`)
+- Graceful shutdown on `SIGINT`/`SIGTERM`
+- Health endpoint at `/healthz`
+- Runtime config via environment variables
+
+## Configuration
+
+Defaults:
+
+- `ADDR=0.0.0.0:8080`
+- `CERT_FILE=./certs/srvr.crt`
+- `KEY_FILE=./certs/priv.key`
+- `PUBLIC_DIR=./public`
 
 ## Setup
-Place the godot export into the ./public folder
 
-Generate a Self-Signed TLS certificate using openSSL - place the certificates into the ./certs folder. 
+1. Put your Godot web export files in `./public`.
+2. Generate local certs:
 
-Open https://127.0.0.1:8080
+```bash
+mkdir -p certs
+openssl req -x509 -newkey rsa:2048 -sha256 -nodes \
+  -keyout certs/priv.key \
+  -out certs/srvr.crt \
+  -days 365 \
+  -subj "/CN=localhost"
+```
+
+3. Start the server:
+
+```bash
+go run ./cmd/server
+```
+
+4. Open:
+
+`https://127.0.0.1:8080`
+
+## Development
+
+Run tests:
+
+```bash
+go test ./...
+```
+
+Build binary:
+
+```bash
+go build -o build/go-dot-server ./cmd/server
+```
